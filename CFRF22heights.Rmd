@@ -1,0 +1,83 @@
+---
+title: "height22heights"
+author: "Jonathan Lucas"
+date: "2023-02-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+theme_set(theme_bw())
+```
+
+
+```{r}
+height <- read.csv("CFRF22heights.csv")
+height <- height%>%filter(site!="Wilmington")
+height$site <- as.factor(height$site)
+height$ploidy <- as.factor(height$ploidy)
+height$line <- as.factor(height$line)
+height$date <- as.Date(height$date, format = "%m/%d/%Y")
+#'height$bag' needs to stay a character vector for now
+```
+
+Make bag numbers consistent across the experiment, despite Pasture Point bag switch on June 7. bags 97,90,99,15,47,48 kept their original numbers.
+```{r}
+height <- height %>% mutate(bag = replace(bag, bag == "128", "65"))
+height <- height %>% mutate(bag = replace(bag, bag == "139", "76"))
+height <- height %>% mutate(bag = replace(bag, bag == "140", "17"))
+height <- height %>% mutate(bag = replace(bag, bag == "125", "85"))
+height <- height %>% mutate(bag = replace(bag, bag == "138", "87"))
+height <- height %>% mutate(bag = replace(bag, bag == "129", "96"))
+```
+
+We split Pasture Point 3N NC on August 3.
+```{r}
+height <- height %>% mutate(bag = replace(bag, bag == "15 and 81", "15"))
+height <- height %>% mutate(bag = replace(bag, bag == "47 and 87", "47"))
+height <- height %>% mutate(bag = replace(bag, bag == "48 and 84", "48"))
+```
+
+We also split Straits 3N NC on September 27.
+```{r}
+height <- height %>% mutate(bag = replace(bag, bag == "147 and 43", "147"))
+height <- height %>% mutate(bag = replace(bag, bag == "148 and 41", "148"))
+height <- height %>% mutate(bag = replace(bag, bag == "149 and 44", "149"))
+
+height$bag <- as.factor(height$bag)
+```
+
+Because all we want to do here is calculate summary statistics on shell heights that we have measured, we can drop all 'NA'. (Could also have used 'tidyr::drop_na')
+```{r}
+height <- height[!is.na(height$height),]
+```
+
+Create one column for genotype
+```{r}
+height <- height %>% unite(genotype, c(line, ploidy), sep = " ", remove = FALSE)
+```
+
+
+
+Now calculate and plot the means.
+```{r}
+heightmeans <- height %>% group_by(site,date,genotype) %>% summarise(mean(height))
+heightmeans <- heightmeans %>% rename(mean = 'mean(height)')
+```
+
+```{r}
+ggplot(heightmeans, aes(x=date, y=mean, color = genotype)) +
+  geom_line(size=1) +
+  facet_wrap(~site) +
+  scale_x_date(date_breaks = "month") +
+  theme(axis.text.x = element_text(angle = 80, vjust = 1, hjust = 1, size = 6)) +
+  labs(y = "Mean Shell Height", x = NULL, color = NULL)
+```
+
+
