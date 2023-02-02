@@ -23,6 +23,7 @@ height <- height%>%filter(site!="Wilmington")
 height$site <- as.factor(height$site)
 height$ploidy <- as.factor(height$ploidy)
 height$line <- as.factor(height$line)
+height$week <- as.factor(height$week)
 height$date <- as.Date(height$date, format = "%m/%d/%Y")
 #'height$bag' needs to stay a character vector for now
 ```
@@ -78,6 +79,13 @@ ggplot(heightmeans, aes(x=date, y=mean, color = genotype)) +
   scale_x_date(date_breaks = "month") +
   theme(axis.text.x = element_text(angle = 80, vjust = 1, hjust = 1, size = 6)) +
   labs(y = "Mean Shell Height", x = NULL, color = NULL)
+```
+This is not rigorous as it does not show any measures of spread, or variance in the means. Let's make boxplots (outliers removed).
+```{r}
+ggplot(height, aes(x=week, y=height, color = genotype)) +
+  geom_boxplot(outlier.shape = NA) +
+  facet_wrap(~site) +
+  labs(y = "Shell Height", x = "Sampling Week", color = NULL)
 ```
 
 
